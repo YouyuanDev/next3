@@ -1,0 +1,27 @@
+#Fri Nov 04 20:12:52 CST 2011
+eclipse.preferences.version=1
+encoding//grails-app/conf/datasource.properties=UTF-8
+encoding//grails-app/controllers/hermes/InterfaceController.groovy=UTF-8
+encoding//grails-app/i18n/CVS=UTF-8
+encoding//grails-app/i18n/lookupValues.properties=UTF-8
+encoding//grails-app/i18n/lookups.properties=UTF-8
+encoding//grails-app/i18n/menuOptions.properties=UTF-8
+encoding//grails-app/i18n/menus.properties=UTF-8
+encoding//grails-app/i18n/messages.properties=UTF-8
+encoding//grails-app/i18n/messages_cn.properties=UTF-8
+encoding//grails-app/i18n/messages_de.properties=UTF-8
+encoding//grails-app/i18n/messages_es.properties=UTF-8
+encoding//grails-app/i18n/messages_fr.properties=UTF-8
+encoding//grails-app/i18n/messages_it.properties=UTF-8
+encoding//grails-app/i18n/messages_ja.properties=UTF-8
+encoding//grails-app/i18n/messages_nl.properties=UTF-8
+encoding//grails-app/i18n/messages_pt_BR.properties=UTF-8
+encoding//grails-app/i18n/messages_pt_PT.properties=UTF-8
+encoding//grails-app/i18n/messages_ru.properties=UTF-8
+encoding//grails-app/i18n/messages_th.properties=UTF-8
+encoding//grails-app/views/auth/login.gsp=UTF-8
+encoding//grails-app/views/hermes/finance/shipmentList.gsp=UTF-8
+encoding//grails-app/views/hermes/finance/shipmentShow.gsp=UTF-8
+encoding//grails-app/views/hermes/logistic/cartonShowDet.gsp=UTF-8
+encoding//grails-app/views/hermes/logistic/packingShow.gsp=UTF-8
+encoding/<project>=UTF-8

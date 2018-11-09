@@ -1,0 +1,408 @@
+html * {
+    margin: 0; /*padding: 0; SELECT NOT DISPLAYED CORRECTLY IN FIREFOX */
+}
+
+/* GENERAL */
+
+.spinner {
+    padding: 5px;
+    position: absolute;
+    right: 0;
+}
+
+body {
+    background: #fff;
+    color: #333;
+    font: 12px verdana, arial, helvetica, sans-serif;
+}
+
+.nav {
+    background: url(../images/gray/toolbar/bg.gif) bottom repeat-x;;
+    background: transparent none repeat-x scroll left top;
+    background-color: #F0F0F0;
+    border: 1px solid #ccc;
+    border-style: none none solid none;
+    margin-top: 2px;
+    padding: 5px 5px;
+    overflow: hidden;
+}
+
+a:link, a:visited, a:hover {
+    color: #666;
+    font-weight: normal;
+    text-decoration: none;
+}
+
+.menuButton {
+    font-size: 12px;
+    padding: 0 5px;
+    font-weight: normal;
+}
+
+.menuButton a {
+    color: #333;
+    padding: 4px 6px;
+}
+
+.menuButton a.home {
+    background: url(../images/skin/house.png) center left no-repeat;
+    color: #333;
+    padding-left: 25px;
+}
+
+.menuButton a.list {
+    background: url(../images/skin/database_table.png) center left no-repeat;
+    color: #333;
+    padding-left: 25px;
+}
+
+.menuButton a.create {
+    background: url(../images/skin/database_add.png) center left no-repeat;
+    color: #333;
+    padding-left: 25px;
+}
+
+.main {
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 5px;
+    height: 100%;
+}
+
+h1 {
+    color: #48802c;
+    font-weight: normal;
+    font-size: 12px;
+    margin: .8em 0 .3em 0;
+}
+
+.message {
+    background: #f3f8fc url(../images/skin/information.png) 8px 50% no-repeat;
+    border: 1px solid #b2d1ff;
+    color: #006dba;
+    margin: 10px 0 5px 0;
+    padding: 5px 5px 5px 30px
+}
+
+div.errors {
+    background: #fff3f3;
+    border: 1px solid red;
+    color: #cc0000;
+    margin: 10px 0 5px 0;
+    padding: 5px 0 5px 0;
+}
+
+div.errors ul {
+    list-style: none;
+    padding: 0;
+}
+
+div.errors li {
+    background: url(../images/skin/exclamation.png) 8px 0% no-repeat;
+    line-height: 16px;
+    padding-left: 30px;
+}
+
+td.errors select {
+    border: 1px solid red;
+}
+
+td.errors input {
+    border: 1px solid red;
+}
+
+input, select, textarea {
+    background-color: #fcfcfc;
+    border: 1px solid #ccc;
+    font: 12px verdana, arial, helvetica, sans-serif;
+    margin: 2px 0;
+    padding: 2px 4px;
+}
+
+select {
+    padding: 2px 2px 2px 0;
+}
+
+textarea {
+    width: 250px;
+    height: 150px;
+    vertical-align: top;
+}
+
+input:focus, select:focus, textarea:focus {
+    border: 1px solid #b2d1ff;
+}
+
+.paginateButtons {
+    background: #fff url(../images/skin/shadow.jpg) bottom repeat-x;
+    border: 1px solid #ccc;
+    border-top: 0;
+    color: #666;
+    font-size: 10px;
+    overflow: hidden;
+    padding: 10px 3px;
+}
+
+.paginateButtons a {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-color: #ccc #aaa #aaa #ccc;
+    color: #666;
+    margin: 0 3px;
+    padding: 2px 6px;
+}
+
+.paginateButtons span {
+    padding: 2px 3px;
+}
+
+.dialog table {
+    padding: 5px 0;
+}
+
+.prop {
+    padding: 5px;
+}
+
+.prop .name {
+    text-align: left;
+    width: 10%;
+    white-space: nowrap;
+    valign: middle;
+}
+
+.prop .value {
+    text-align: left;
+    width: 40%;
+}
+
+/* ACTION BUTTONS */
+
+.buttons {
+/*background: #fff url(../images/skin/shadow.jpg) bottom repeat-x;*/
+    -moz-background-clip: border;
+    -moz-background-inline-policy: continuous;
+    -moz-background-origin: padding;
+    background: #cccccc url(../images/ui-bg_highlight-soft_75_cccccc_1x100.png) 50% 50% repeat-x;
+    border: 0px solid #AAAAAA;
+    color: #222222;
+    font-weight: bold;
+    border-top: 1px solid #AAAAAA;
+
+    font-size: 12px;
+    margin-top: 5px;
+    overflow: hidden;
+    padding: 0;
+}
+
+.buttons input {
+    background: #fff;
+    border: 0;
+    color: #333;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 3px;
+    overflow: visible;
+    padding: 2px 2px;
+}
+
+.buttons input.delete {
+    background: transparent url(../images/skin/database_delete.png) 5px 50% no-repeat;
+    padding-left: 28px;
+}
+
+.buttons input.edit {
+    background: transparent url(../images/skin/database_edit.png) 5px 50% no-repeat;
+    padding-left: 28px;
+}
+
+.buttons input.save {
+    background: transparent url(../images/skin/database_save.png) 5px 50% no-repeat;
+    padding-left: 28px;
+}
+
+.ui-jqgrid {
+    font-size: 12px
+}
+
+.ui-dialog {
+    padding: 0 0 0 0;
+    margin-bottom: 5px; /*margin-top:5px;*/
+    width: 100%;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    border-left: 0 none;
+    border-right: 0 none;
+    border-top: 0 none;
+    padding: 0.3em 0.2em 0.2em 0.3em;
+}
+
+.ui-dialog .ui-widget-header {
+    border-bottom: 1;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+}
+
+ui-dialog-titlebar ui-widget-header ui-corner-all {
+    -moz-border-radius-bottomleft: 0px;
+    -moz-border-radius-bottomright: 0px;
+    -moz-border-radius-topleft: 4px;
+    -moz-border-radius-topright: 4px;
+}
+
+.fg-button {
+    outline: 0;
+    margin: 2 0 0 0;
+    padding: .2em .5em;
+    text-decoration: none !important;
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+    zoom: 1;
+}
+
+.fg-button .ui-icon {
+    position: absolute;
+    top: 50%;
+    margin-top: -8px;
+    left: 50%;
+    margin-left: -8px;
+}
+
+a.fg-button {
+    float: left;
+}
+
+/* remove extra button width in IE */
+button.fg-button {
+    width: auto;
+    overflow: visible;
+}
+
+.fg-button-icon-left {
+    padding-left: .2em;
+}
+
+.fg-button-icon-right {
+    padding-right: .2em;
+}
+
+.fg-button-icon-left .ui-icon {
+    right: auto;
+    left: .2em;
+    margin-left: 0;
+}
+
+.fg-button-icon-right .ui-icon {
+    left: auto;
+    right: .2em;
+    margin-left: 0;
+}
+
+.fg-button-icon-solo {
+    display: block;
+    width: 8px;
+    text-indent: -9999px;
+}
+
+/* solo icon buttons must have block properties for the text-indent to work */
+
+.fg-buttonset {
+    float: left;
+}
+
+.fg-buttonset .fg-button {
+    float: left;
+}
+
+.fg-buttonset-single .fg-button,
+.fg-buttonset-multi .fg-button {
+    margin-right: -1px;
+}
+
+.fg-toolbar {
+    padding: 1;
+    margin: 0;
+    border-bottom: 1;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+}
+
+.fg-toolbar .fg-buttonset {
+    margin-right: 1px;
+    margin-bottom: 2px;
+    margin-top: 2px;
+    margin-left: 3px;
+}
+
+.fg-toolbar .fg-button {
+    font-size: 1em;
+}
+
+
+html, body {
+  margin: 0;
+  padding: 0; /*font-size: 75%;*/
+}
+
+input.text {
+  margin-bottom: 12px;
+  width: 95%;
+  padding: .4em;
+}
+
+fieldset {
+  padding: 0;
+  border: 0;
+  margin-top: 25px;
+}
+
+div#users-contain {
+  width: 350px;
+  margin: 20px 0;
+}
+
+div#users-contain table {
+  margin: 1em 0;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+div#users-contain table td, div#users-contain table th {
+  border: 1px solid #eee;
+  padding: .6em 10px;
+  text-align: left;
+}
+
+.ui-button {
+  outline: 0;
+  margin: 0;
+  padding: .4em 1em .5em;
+  text-decoration: none;
+!important;
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+}
+
+.ui-dialog .ui-state-highlight, .ui-dialog .ui-state-error {
+  padding: .3em;
+}
+.form_tags { margin-bottom: 10px; }
+
+/* Setting widget width example */
+.textboxlist { width: 400px; }
+
+/* Preloader for autocomplete */
+.textboxlist-loading { background: url('images/spinner.gif') no-repeat 380px center; }
+
+/* Autocomplete results styling */
+.form_friends .textboxlist-autocomplete-result { overflow: hidden; zoom: 1; }
+.form_friends .textboxlist-autocomplete-result img { float: left; padding-right: 10px; }
+
+.note { color: #666; font-size: 90%; }
+#footer { margin: 50px; text-align: center; }

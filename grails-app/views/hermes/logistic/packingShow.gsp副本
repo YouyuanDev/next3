@@ -1,0 +1,12 @@
+<!-->
+<g:if test="true || ${instance?.vaildDate}">
+-->
+<span class="button"><a href="${resource(dir:'')}/interface/exportPackingInvoice?id=${instance?instance.id:''}" class="save">Export</a></span>
+</g:if>
+<g:else>
+<span class="button"><input type="submit" class="save" action="updatePacking" value="${message(code: 'default.button.update.label', default: 'Save Packing')}"/></span>
+<g:if test="true || ${instance}">
+<span class="button"><input type="button" id="addCarton" class="save" action="add" value="${message(code: 'default.button.add.label', default: 'Add Carton')}"/></span>
+<span><a href="${resource(dir:'')}/interface/exportPackingInvoice?id=${instance?instance.id:''}" class="save">Export</a></span>
+</g:if>
+</g:else>

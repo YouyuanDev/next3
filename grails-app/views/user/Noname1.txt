@@ -1,0 +1,2 @@
+			<g:lookupSelect id="status" name="status" realm="order.status" value="${Confirm}"/>
+			<g:lookupValue realm="order.status" value="Confirm"/>

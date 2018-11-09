@@ -1,0 +1,750 @@
+package hermes
+
+
+import next.*
+import grails.converters.*
+import groovy.sql.Sql
+
+import org.apache.poi.hssf.usermodel.*
+import java.text.SimpleDateFormat
+import java.text.DecimalFormat
+
+
+class InvoiceController extends BaseController {
+	def dataSource;
+	def logisticService
+	def invoiceService
+	def jqgridFilterService
+
+	/* invoice section */
+	def listBpInvoices = {
+		render(view: "/hermes/logistic/bpInvoicesList")
+	}
+	def listBpInvoicesJson = {
+	    def instanceList = searchBusinessInvoiceBP(params,false)
+	    log.info instanceList.size()
+	    def pager = searchBusinessInvoiceBP(params,true)
+	    JqgridJSON jqgridJSON = new JqgridJSON(pager)
+	    instanceList.eachWithIndex { elem,i->
+			def cell = new ArrayList()
+			cell.add(elem.id)
+			cell.add(elem.business.code)
+			cell.add(elem.code)
+			cell.add(elem.reInvoice)
+			String DATE_FORMAT = "yyyy-MM-dd";
+		    def sdf = new SimpleDateFormat(DATE_FORMAT);
+			cell.add(sdf.format(elem.invoiceDate))
+/*			cell.add(elem.invoiceHeader.business.customer.customerShortCode)
+			cell.add(elem.invoiceHeader.business.customer.customerCateName)
+			cell.add(elem.product.dept)
+			cell.add(elem.product.category.description)
+			cell.add(elem.product.category.code)
+			cell.add(elem.product.category.name)
+			cell.add(elem.product.name)
+			cell.add(elem.quantity)
+			cell.add(elem.amount)
+			cell.add(elem.logisticIssuance)
+			cell.add(elem.logisticFreight)
+			cell.add(elem.getLogisticTotal())*/
+			jqgridJSON.addRow(i, cell)
+	    }
+	    render jqgridJSON.json as JSON
+	}
+	
+	def searchBusinessInvoiceBP(params,doCount){
+		log.info params
+		def bpCode =  params['bpCode']
+		def invoiceCode =  params['invoiceCode']
+		def reInCode =  params['reInCode']
+		def sortfield = params['sort']
+		def order = params['order']
+		                   
+		if (!sortfield) {
+			sortfield="id"
+			order="asc"
+		}
+		def criteriaClosure = {
+            business{
+              if(bpCode) like ('code','%'+bpCode+'%')
+            }
+            if(invoiceCode) like 'code','%'+invoiceCode+'%'
+            if(reInCode) like 'reInvoice','%'+reInCode+'%'
+            order("code","asc")
+          }
+		return jqgridFilterService.jqgridAdvFilter(params,InvoiceHeader,criteriaClosure,doCount)
+	}
+	
+	def searchBusinessInvoice(params,doCount){
+		log.info params
+		def bpCode =  params['bpCode']
+		def invoiceCode =  params['invoiceCode']
+		def reInCode =  params['reInCode']
+		def categoryCode = params['categoryCode']
+		def productCode =  params['productCode']
+		def productDept =  params['productDept']
+		def productMaterial =  params['productMaterial']
+		                             
+		def searchSort = params.searchSort
+		params.sort="id"
+		def criteriaClosure = {
+	        and{
+	          invoiceHeader{
+	            business{
+	              if(bpCode) like 'code','%'+bpCode+'%'
+	            }
+	            if(invoiceCode) like 'code','%'+invoiceCode+'%'
+	            if(reInCode) like 'reInvoice','%'+reInCode+'%'
+	          }
+	          product{
+	            category{
+	              if(categoryCode) like 'code', '%'+categoryCode+'%'
+	            }
+	            if(productCode)  like 'code', '%'+productCode+'%'
+				if(searchSort && searchSort.equals("product")) order("code","asc")
+	            if(productDept)  like 'dept', '%'+productDept+'%'
+	            if(productMaterial)  like 'material', '%'+productMaterial+'%'
+				if(searchSort && searchSort.equals("dept")) order("dept","asc")
+				//if(searchSort && searchSort.equals("material")) order("material","asc")
+	          }
+	        }
+	      }
+		return jqgridFilterService.jqgridAdvFilter(params,InvoiceItem,criteriaClosure,doCount)
+	}
+	
+	def showBP = {
+		log.info params
+
+		def instance = Business.findByCode(params.id)
+		if (!instance) {
+		  flash.message = "${message(code: 'default.not.found.message', args: [message(code: 'Business.label', default: 'Business'), params.id])}"
+		  redirect(action: "list")
+		}
+		else {
+			def reInvoiceNumbers = logisticService.getReInvoice(instance)  
+			render(view: "/hermes/logistic/bpInvoicesShow", model: [instance: instance,invoices:instance.invoiceHeaders,reInvoiceNumbers:reInvoiceNumbers,notnull:params.notnull])
+		}
+	}	
+	def listBPInvoiceItemsJson ={
+		def id = params.id
+		log.info params
+		def business = Business.get(id)
+		def adjItem = logisticService.getAdjustInvoiceItem(id)
+		def criteriaClosure = {
+			invoiceHeader{
+	            eq("business",business)
+	        }
+			//default from user requirement (product.dept )
+			product{
+				order("dept","asc")
+				category{
+					order("description","asc")
+				}
+			}
+			
+		}
+		def instanceList = jqgridFilterService.jqgridAdvFilter(params,InvoiceItem,criteriaClosure,false);
+		def pager = jqgridFilterService.jqgridAdvFilter(params,InvoiceItem,criteriaClosure,true);
+		JqgridJSON jqgridJSON = new JqgridJSON(pager)
+		def i=0
+		instanceList.each{elem->  
+			def cell = new ArrayList()
+			cell.add(elem.id)
+			//cell.add(elem.product.category.code)
+			cell.add(elem.product.code)
+			cell.add(elem.product.colorName)
+			cell.add(elem.product.sizeName)
+			cell.add(elem.product.familyName)
+			cell.add(elem.product.dept)
+			cell.add(elem.product.category.description)
+			cell.add(elem.country)
+			if (elem.productName && elem.productName.length() > 0) {
+				cell.add('No')
+				cell.add(elem.productName)
+			} else {
+				cell.add('Yes')
+				cell.add(elem.product.category.name)
+			}
+			cell.add(elem.product.productName)
+	      	cell.add(elem.quantity)
+			def df = new DecimalFormat("#.00")
+			if( adjItem && elem.id == adjItem.id ){
+				def adjAmount = new BigDecimal(elem.getLogisticAmount())+new BigDecimal(business.totalAdjDiff)
+				cell.add("<div style='background-color:red'>"+df.format(adjAmount*elem.quantity)+"</div>")
+			}else{
+				if ((elem.getLogisticAmount()==0) || (elem.getLogisticAmount()==null)){
+					cell.add("<div style='background-color:yellow'>0</div>")
+				}else{
+					cell.add(df.format(elem.getLogisticAmount()*elem.quantity))
+				}
+			}
+			cell.add(elem.logisticIssuance)
+			cell.add(elem.logisticFreight)
+			cell.add(elem.getLogisticAmountTotal())
+			i=i+1
+      		jqgridJSON.addRow(i, cell)
+		}
+		render jqgridJSON.json as JSON
+		
+	}
+	def listBPInvoicesJson={
+		def id = params.id
+		def business = Business.get(id)
+		def criteriaClosure = {
+            if(id) eq 'business', business
+			order("code","asc")
+			order("recode","asc")
+		}
+		def instanceList = jqgridFilterService.jqgridAdvFilter(params,InvoiceHeader,criteriaClosure,false);
+		def pager = jqgridFilterService.jqgridAdvFilter(params,InvoiceHeader,criteriaClosure,true);
+		JqgridJSON jqgridJSON = new JqgridJSON(pager)
+		def i=0
+		instanceList.each{elem->
+			def cell = new ArrayList()
+			cell.add(elem.id)
+			cell.add(elem.code)
+		    String DATE_FORMAT = "yyyy-MM-dd";
+		    def sdf = new SimpleDateFormat(DATE_FORMAT);
+			cell.add(sdf.format(elem.invoiceDate))
+			if(elem.importDate){
+				cell.add(sdf.format(elem.importDate))
+			}else{
+				cell.add('')
+			}
+			if(elem.exportDate){
+				cell.add(sdf.format(elem.exportDate))
+			}else{
+				cell.add('')
+			}
+			
+			cell.add(elem.business.customer.reInvoicePreCode)
+			cell.add(elem.recode)
+			i=i+1
+      		jqgridJSON.addRow(i, cell)
+		}
+		render jqgridJSON.json as JSON		
+	}
+	
+	def updateBusiness = {
+		log.info params
+	    def id = params['id']
+	    def issuance = params.totalIssuance
+	    def freight = params.totalFreight
+		def totalAdjDiff = params.totalAdjDiff
+		def hawb = params.hawb
+		def currency = params.currency
+		def cocitis = params.cocitis
+		def business = Business.get(id)
+		
+		if (logisticService.getInvoiceAmountNotNull(business).equals("0")){
+			params.notnull="0"
+		}else{
+			params.notnull="1"
+			logisticService.updateBusiness(id,new BigDecimal(issuance),new BigDecimal(freight),new BigDecimal(totalAdjDiff),hawb,currency,cocitis)
+		}
+		params.id = business.code
+		log.info params
+		redirect(action: "showBP", params: params)		
+	}
+	def updateInvoiceHeader = {
+	    def id = params['id']
+	    def reInvoice = params['reinvoice']
+	    def issuance = params['issuance']
+	    def freight = params['freight']
+			logisticService.updateInvoiceHeader(id,reInvoice,issuance,freight)
+	    redirect(action: "show", params: params)
+  	}
+	def updateInvoiceItem = {
+		log.info params
+		def id = params['invoiceitem.id']
+		def material = params['product.material']
+		def desczh = params['product.desczh']
+		def amount = params['invoiceitem.amount']
+		                                   
+		def ismaster = params['product.ismaster']
+		def country = params['invoiceitem.country']
+			logisticService.updateInvoiceItem(id,material,desczh,ismaster,country,amount)
+		render(text: "success")
+	}
+	def updateHawbByItems = {
+		log.info params
+		def ids = params.ids
+		def hawb = params.hawb
+		logisticService.updateHawb(ids.tokenize(','),hawb)
+		render(text: "")
+	}
+	def updateReceiveDateByItems = {
+		log.info params
+		def ids = params.ids
+		def receiveDate = params.receiveDate
+		logisticService.updateReceiveDate(ids,receiveDate)
+		render(text: "")
+	}
+	def updateReinvoiceById = {
+		log.info params
+		def id = params.invoiceId
+		def number = params.number
+		def importDate = params.importDate
+		def exportDate = params.exportDate
+		if(logisticService.updateInvoiceItemReNumber(id,importDate,exportDate,number)){
+			render(text:"")
+		}else{
+			render(text:"error")
+		}
+	}
+	def updateAdjAmount = {
+		log.info params
+		logisticService.updateLogsAdjAmount(params.id,new BigDecimal(params.adjAmount))
+		//redirect(action:"showBP",params:params)
+		render(text:"")
+	}
+	
+	/* packing section */
+	def listPacking={
+		def map = [ busiList: Business.list() ]
+		render(view:"/hermes/logistic/packingList",model:map)
+	}
+	def listPackingJson={
+	    def instanceList = searchPacking(params,false)
+	    def pager = searchPacking(params,true)
+	    JqgridJSON jqgridJSON = new JqgridJSON(pager)
+	    instanceList.eachWithIndex { elem,i->
+			def cell = new ArrayList()
+			cell.add(elem.id)
+			cell.add(elem.business.code)
+			def reInvoiceNumbers = logisticService.getReInvoice(elem.business) 
+			cell.add(reInvoiceNumbers) 
+		    String DATE_FORMAT = "yyyy-MM-dd"
+		    def sdf = new SimpleDateFormat(DATE_FORMAT)
+			//cell.add(sdf.format(elem.date))
+			//cell.add(elem.date)
+			//log.info elem.date
+			cell.add(sdf.format(elem.date))
+			jqgridJSON.addRow(i, cell)
+	    }
+	    render jqgridJSON.json as JSON
+	}
+	def searchPacking(params,doCount){
+		def bpCode =  params.bpCode
+		def reInvoice =  params.reInvoice
+		def sidx=params.sidx
+		def sord=params.sord
+		
+		//我已经设置了初始化排序，但不知道为什么，初始sidx和sord都为“code”，忽略这种情况
+		//另外reInvoiceNo 不能通过sql简单排序，所以reInvoiceNo不参与排序
+		
+		
+		if(sord=='code')sord=null
+		
+		//if(sidx=='bpcode') sidx="business.code";
+		
+		
+		
+		def criteriaClosure = {
+			if(bpCode) {
+				business{
+					like("code","%"+bpCode+"%")
+				}
+			}
+			if(sidx)
+			{
+				if(sord)
+				{
+					if(sidx=="bpcode")
+					{
+						business{
+							order("code",sord)
+						}
+					}	
+					else
+					{	
+						order(sidx,sord)
+					}
+				}
+			}
+		}		
+		return jqgridFilterService.jqgridAdvFilter(params,Packing,criteriaClosure,doCount)
+	}
+	def showPacking={
+		def id = params.id
+		def packing = Packing.get(id);
+		def cartonIds = []
+		def reInvoiceNumbers=''
+		def bpList
+		if(packing){
+			def cartons = Carton.findAllByPacking(packing,[sort:"code",order:"asc"])
+			cartons.each{
+				cartonIds.add(it.id)
+			}
+			reInvoiceNumbers = logisticService.getReInvoice(packing.business)  
+			log.info reInvoiceNumbers
+		}else{
+			bpList=invoiceService.getNoPackingBusiness()
+		}
+		render(view:"/hermes/logistic/packingShow",model:[instance:packing,cartons:cartonIds,reInvoiceNumbers:reInvoiceNumbers,bpList:bpList])
+	}
+	def updatePacking ={
+		log.info params
+		def id = params.id
+		def bpCode = params.bpCode
+		def packing = Packing.get(id)
+		
+		if(!packing){
+			def business = Business.findByCode(bpCode)
+			def exist = Packing.findByBusiness(business)
+			log.info exist
+			if(!exist){
+				packing = new Packing()
+				packing.business = business
+				packing.date = new Date()
+			}else{
+				flash.message = "bp code:"+bpCode+" packing is exists!"
+				render(view:"/hermes/logistic/packingShow",model:[instance:null,cartons:[],reInvoiceNumbers:''])
+				return false
+			}
+		}
+		packing.hardCopy = params.hardCopy
+		packing.description = params.description
+		if(params.vaildDate){
+	        SimpleDateFormat formate= new SimpleDateFormat("yyyy-MM-dd");
+	        Date date = formate.parse(params.vaildDate);
+			packing.vaildDate = date
+			packing.vaild = 'Y'
+		}		
+		
+	    if (!packing.save(flush: true)) {
+	      packing.errors.each {
+	        log.info it
+	      }
+	    }
+		def cartonIds = []
+		if(packing){
+			packing.cartons.each{
+				cartonIds.add(it.id)
+			}
+		}
+		def reInvoiceNumbers = logisticService.getReInvoice(packing.business)  
+		render(view:"/hermes/logistic/packingShow",model:[instance:packing,cartons:cartonIds,reInvoiceNumbers:reInvoiceNumbers])
+	}
+	
+	/* carton section */
+	def listCartonItemsJson={
+		def cartonId = params.id
+		def carton = Carton.get(cartonId)
+		def criteriaClosure = {
+            eq("carton",carton)
+			order("sequence","asc")
+		}
+		def instanceList = jqgridFilterService.jqgridAdvFilter(params,CartonItem,criteriaClosure,false);
+		def pager = jqgridFilterService.jqgridAdvFilter(params,CartonItem,criteriaClosure,true);
+		JqgridJSON jqgridJSON = new JqgridJSON(pager)
+		def i=0
+		instanceList.each{elem->  
+			def cell = new ArrayList()
+			cell.add(cartonId)
+			cell.add(elem.id)
+			cell.add(elem.invoiceItem.id)
+			cell.add(elem.invoiceItem.product.code)
+			cell.add(elem.sequence)
+			cell.add(elem.invoiceItem.invoiceHeader.code)
+			cell.add(elem.invoiceItem.product.dept)
+			cell.add(elem.invoiceItem.product.category.name)
+			cell.add(elem.invoiceItem.product.productName)
+			cell.add(elem.quantity)
+			i=i+1
+      		jqgridJSON.addRow(i, cell)
+		}
+		render jqgridJSON.json as JSON
+	}
+	def showCarton={
+		def id = params.id
+		def carton = Carton.get(id);
+		if(carton){
+			def cartonJson = [:]
+			cartonJson.desc1 = logisticService.getCartonTitleH(carton)
+			cartonJson.desc2 = logisticService.getCartonTitleF(carton)
+			render cartonJson as JSON
+		}
+	}
+	def deleteCarton = {
+		logisticService.deleteCarton(params.id)
+		render(text:"success")
+	}
+	def updateCarton = {
+		log.info params
+		def dialogCartonId = params.dialogCartonId
+		def carton = Carton.get(dialogCartonId)
+
+		if(!carton){
+			def packing = Packing.get(params.id)
+			if(packing){
+				carton = new Carton()
+				def code = logisticService.getCartonNextCode(packing)
+				carton.code = code
+				carton.packing = packing
+				carton.description1 = ''
+				carton.description2 = ''
+			}
+		}
+	    if (!carton.save(flush: true)) {
+	      carton.errors.each {
+	        log.info it
+	      }
+	    }
+		log.info "saved carton: code="+carton.code+" id="+carton.id
+		render(text:carton.id)
+	}
+	def updateCartonItem={
+		log.info params
+		def oper = params.oper
+		def cartonId = params.cartonId
+		def cartonItemId = params.cartonItemId
+		def invoiceItemId = params.invoiceItemId
+		def quantity = params.cartonQuantity
+		def sequence = params.sequence
+		
+		logisticService.updateCartonItem(oper,cartonId,invoiceItemId,cartonItemId,quantity,sequence)
+		render(text:"")		
+	}
+
+	def showCartonDet={
+		log.info params
+		def id = params.id
+		def carton = Carton.get(id);
+		if(carton){
+			render(view:"/hermes/logistic/cartonShowDet",model:[instance:carton])
+		}
+	}
+	def updateCartonDet={
+		log.info params
+		def id = params.id
+		def carton = Carton.get(id)
+		if(carton){
+			//def hardCopy = params.hardCopy
+			//if(hardCopy) carton.hardCopy = hardCopy
+			def nWeight = params.nWeight
+			def gWeight = params.gWeight
+			if(nWeight) carton.nWeight = new BigDecimal(nWeight)
+			if(gWeight) carton.gWeight = new BigDecimal(gWeight)
+			def items = params.items
+			log.info "items="+items
+			if(items){
+				def invoiceitemids = items.split(',')
+				invoiceitemids.each{
+					log.info "invoiceItemid="+it
+					def invoiceItem = InvoiceItem.get(it)
+					if(invoiceItem){
+						logisticService.updateCartonItem('add',id,invoiceItem.id,null,invoiceItem.quantity,null)
+					}
+				}
+			}
+			carton.save(flush:true)
+			flash.message = "save success!"
+		}else{
+			flash.message = "carton id:="+id+" is not found"
+		}
+		render(view:"/hermes/logistic/cartonShowDet",model:[instance:carton])
+		
+	}
+	/* auto complete */
+	def listDistinctHawbJson={
+		def results = Business.withCriteria{
+			projections{
+				distinct("hawb")
+			}
+		}
+		def hawbs = []
+		results.each{
+			def hawb = [:]
+			hawb.code = it
+			hawbs.add(hawb)
+		}
+		render hawbs as JSON
+	}
+	def listBusinessCodeJson = {
+		def results = Business.withCriteria{
+			projections{
+				distinct("code")
+			}
+		}
+		log.info results
+		def bps = []
+		results.each{
+			log.info it
+			def bp = [:]
+			bp.code = it
+			bps.add(bp)
+		}
+		render bps as JSON
+	}
+	def listDistinctProductByBusiness = {
+		def business = Business.findByCode(params.bpCode)
+		def products = InvoiceItems.withCriteria{
+			projections{
+				distinct("product")
+			}
+			invoiceHeader{
+				eq("business",business)
+			}
+		}
+		log.info products
+		//render products as JSON
+	}
+	def listCartonInvoiceItemsJson={
+		def cartonId = params.cartonId
+		def carton = Carton.get(cartonId)
+		if(carton){
+			def results = InvoiceItem.withCriteria{
+				invoiceHeader{
+					eq("business",carton.packing.business)
+				}
+			}
+			def invoiceItems = []
+			results.each{
+			 	def ii = [:]
+				ii.product = it.product.code
+				ii.category = it.product.category.code
+				ii.quantity = it.quantity
+				ii.dept = it.product.dept
+				ii.material = it.product.material
+				ii.zhname = it.product.category.name
+				ii.enname = it.product.name
+				ii.invoiceItemId = it.id
+				ii.invoiceCode = it.invoiceHeader.code
+				ii.cartonId = cartonId
+				invoiceItems.add(ii)
+			}
+			render invoiceItems as JSON
+		}
+	}
+	def listCartonProductItemsJson={
+		log.info params
+		def cartonId = params.id
+		//Kurt Edited
+		def deptOrder=params.sord
+		System.err.println("deptOrder=="+deptOrder)
+		def carton = Carton.get(cartonId)
+		if(carton){
+			/*
+			def results = InvoiceItem.withCriteria{
+				invoiceHeader{
+					eq("business",carton.packing.business)
+				}
+				product{
+					if(params.prodCode && params.prodCode.length()>0) like('code','%'+params.prodCode+'%')
+				}
+			}*/
+			def criteriaClosure = {
+		        and{
+					invoiceHeader{
+						eq("business",carton.packing.business)
+					}
+					product{
+						if(params.prodCode && params.prodCode.length()>0) like('code','%'+params.prodCode+'%')
+					    //Kurt Edited
+							order("dept",deptOrder)
+					}
+				}
+				
+			}
+			def instanceList = jqgridFilterService.jqgridAdvFilter(params,InvoiceItem,criteriaClosure,false)
+		    def pager = jqgridFilterService.jqgridAdvFilter(params,InvoiceItem,criteriaClosure,true)
+		    JqgridJSON jqgridJSON = new JqgridJSON(pager)
+			log.info instanceList.size()
+			def ii = 0
+			instanceList.each{elem->
+				def cell = new ArrayList()
+				if(!checkExistCartonProduct(carton,elem)){
+					cell.add(elem.id)
+					cell.add(elem.invoiceHeader.code)
+					cell.add(elem.product.code)
+					cell.add(elem.product.dept)
+					cell.add(elem.product.category.name)
+					cell.add(elem.product.name)
+					cell.add(elem.quantity)
+					jqgridJSON.addRow(ii, cell)
+					ii=ii+1
+				}
+				/*
+				.category = it.product.category.code
+				ii.quantity = it.quantity
+				ii.dept = it.product.dept
+				ii.material = it.product.material
+				ii.zhname = it.product.category.name
+				ii.enname = it.product.name
+				ii.invoiceItemId = it.id
+				ii.invoiceCode = it.invoiceHeader.code
+				ii.cartonId = cartonId
+				*/
+				//invoiceItems.add(ii)
+			}
+			//log.info invoiceItems
+			//render invoiceItems as JSON
+			render jqgridJSON.json as JSON
+		}
+	}
+	def checkExistCartonProduct(carton,invoiceItem){
+		def result = false
+		carton.cartonItems.each{
+			if(it.invoiceItem.id==invoiceItem.id){
+				result = true
+			}
+		}
+		return result
+	}
+
+	/* todo need to delete */
+	def showInvoice = {
+		def instance = InvoiceHeader.findByCode(params.id)
+		if (!instance) {
+		  flash.message = "${message(code: 'default.not.found.message', args: [message(code: 'InvoiceHeader.label', default: 'InvoiceHeader'), params.id])}"
+		  redirect(action: "list")
+		}
+		else {
+		  log.info instance.code
+		  render(view: "hermesshow", model: [instance: instance])
+		}
+	}
+  	def listInvoiceItemsJson = {
+		def adjItem = logisticService.getAdjustInvoiceItem()
+		def invoiceHeader = InvoiceHeader.findByCode(params.id)
+		def criteriaClosure = {
+			eq 'invoiceHeader',invoiceHeader
+		}
+		def instanceList = jqgridFilterService.jqgridAdvFilter(params,InvoiceItem,criteriaClosure,false);
+		def pager = jqgridFilterService.jqgridAdvFilter(params,InvoiceItem,criteriaClosure,true);
+		
+		JqgridJSON jqgridJSON = new JqgridJSON(pager)
+		def i=0
+		instanceList.each{elem->
+			def cell = new ArrayList()
+			cell.add(elem.id)
+			cell.add(elem.product.category.code)
+			cell.add(elem.product.colorName)
+			cell.add(elem.product.sizeName)
+			cell.add(elem.product.familyName)
+			cell.add(elem.country)
+			cell.add(elem.product.material)
+			if (elem.productName && elem.productName.length() > 0) {
+				cell.add('No')
+				cell.add(elem.productName)
+			} else {
+				cell.add('Yes')
+				cell.add(elem.product.category.name)
+			}
+			cell.add(elem.product.productName)
+	      	cell.add(elem.quantity)
+			if( elem.id == adjItem.id ){
+				cell.add("<div class='redColor'>"+elem.getLogisticAmount()+"</div>")
+			}else{
+				cell.add(elem.getLogisticAmount())
+			}
+			cell.add(elem.logisticIssuance)
+			cell.add(elem.logisticFreight)
+			cell.add(elem.getLogisticTotal() * elem.quantity)
+			i=i+1
+      		jqgridJSON.addRow(i, cell)
+		}
+		render jqgridJSON.json as JSON
+  	}
+	
+}

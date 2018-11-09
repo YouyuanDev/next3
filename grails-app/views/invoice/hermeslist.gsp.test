@@ -1,0 +1,11 @@
+<html>
+<head>
+<meta name="layout" content="main_test" />
+<title><g:message code="default.list.label" args="[entityName]" /></title>
+<filterpane:includes />
+</head>
+<body>
+<filterpane:filterPane filterPaneId="filterPane" filterBean="hermes.HermesInvoiceHeader"/>
+<filterpane:filterButton title="sss"/>
+</body>
+</html>
